@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satellite Shaped Allocation &mdash; GHGP Proposal</title>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Display:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<style>
+  :root {
+    --blue: #4285F4;
+    --red: #EA4335;
+    --yellow: #FBBC05;
+    --green: #34A853;
+    --ink: #202124;
+    --ink2: #5F6368;
+    --ink3: #80868B;
+    --line: #DADCE0;
+    --bg: #F8F9FA;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Google Sans',system-ui,sans-serif; background:#1a1a1a; overflow:hidden; }
+  .slide {
+    width:100vw; height:100vh; position:absolute; top:0; left:0;
+    background:#fff; opacity:0; pointer-events:none; transition:opacity .35s;
+    display:flex; flex-direction:column; justify-content:center;
+    padding:7vh 8vw;
+  }
+  .slide.active { opacity:1; pointer-events:all; }
+
+  /* ── Nav ── */
+  .nav { position:fixed; bottom:3vh; right:4vw; display:flex; gap:8px; z-index:99; }
+  .nav button {
+    width:44px; height:44px; border-radius:50%; border:none;
+    background:var(--ink); color:#fff; font-size:20px; cursor:pointer;
+  }
+  .nav button:hover { background:var(--blue); }
+  .nav button:disabled { background:var(--line); color:#999; cursor:default; }
+  .counter { position:fixed; bottom:3.6vh; left:4vw; font-size:13px; color:var(--ink3); z-index:99; }
+
+  /* ── Slide 1: Title ── */
+  .s1-top { display:flex; align-items:center; gap:2rem; margin-bottom:5vh; }
+  .s1-left { flex:0 0 42%; }
+  .s1-right { flex:1; }
+  .s1-badge {
+    display:inline-block; font-size:12px; font-weight:500; letter-spacing:.5px;
+    text-transform:uppercase; color:var(--blue); background:#E8F0FE;
+    padding:5px 12px; border-radius:20px; margin-bottom:2.5vh;
+  }
+  .s1-left h1 {
+    font-family:'Google Sans Display','Google Sans',sans-serif;
+    font-size:clamp(26px,3.2vw,48px); font-weight:700; line-height:1.15;
+    color:var(--ink); margin-bottom:2vh;
+  }
+  .s1-left h1 em { font-style:normal; color:var(--blue); }
+  .s1-sub { font-size:clamp(14px,1.3vw,19px); color:var(--ink2); line-height:1.6; }
+  .s1-legend {
+    display:flex; justify-content:center; gap:2rem; margin-bottom:.6rem;
+    font-size:13px; color:var(--ink2);
+  }
+  .s1-legend .dot { display:inline-block; width:14px; height:2px; vertical-align:middle; margin-right:6px; }
+  .s1-chart-note { font-size:12px; color:var(--ink3); text-align:center; margin-top:.5rem; }
+  .s1-stats {
+    display:flex; gap:2vw; margin-top:4vh;
+  }
+  .s1-stat { text-align:center; flex:1; }
+  .s1-stat-num {
+    font-family:'Google Sans Display','Google Sans',sans-serif;
+    font-size:clamp(32px,3.5vw,56px); font-weight:700; line-height:1;
+  }
+  .s1-stat-label { font-size:clamp(12px,1vw,15px); color:var(--ink2); margin-top:6px; }
+
+  /* ── Slide 2: Problem ── */
+  .s2-h {
+    font-family:'Google Sans Display','Google Sans',sans-serif;
+    font-size:clamp(28px,3.6vw,54px); font-weight:700; line-height:1.15;
+    color:var(--ink); margin-bottom:6vh; max-width:850px;
+  }
+  .s2-h em { font-style:normal; color:var(--red); }
+  .s2-points { display:flex; gap:4vw; }
+  .s2-point { flex:1; }
+  .s2-point-num {
+    font-family:'Google Sans Display','Google Sans',sans-serif;
+    font-size:clamp(36px,3vw,52px); font-weight:700; line-height:1; margin-bottom:1.5vh;
+  }
+  .s2-point h3 { font-size:clamp(16px,1.4vw,22px); font-weight:500; color:var(--ink); margin-bottom:1vh; }
+  .s2-point p { font-size:clamp(13px,1.1vw,16px); color:var(--ink2); line-height:1.6; }
+
+  /* ── Slide 3: How it works ── */
+  .s3-h {
+    font-family:'Google Sans Display','Google Sans',sans-serif;
+    font-size:clamp(26px,3.2vw,48px); font-weight:700; color:var(--ink);
+    margin-bottom:4vh;
+  }
+  .s3-steps { display:flex; gap:3vw; margin-bottom:3.5vh; }
+  .s3-step { flex:1; }
+  .s3-step-num {
+    width:36px; height:36px; border-radius:50%; background:var(--blue); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:16px; margin-bottom:1.2vh;
+  }
+  .s3-step h4 { font-size:clamp(15px,1.3vw,20px); font-weight:500; margin-bottom:.6vh; }
+  .s3-step p { font-size:clamp(12px,1vw,15px); color:var(--ink2); line-height:1.5; }
+  .s3-formulas {
+    display:flex; gap:2vw; margin-bottom:3vh;
+  }
+  .s3-formula-card {
+    flex:1; border-radius:16px; padding:28px 32px;
+    border:2px solid var(--line);
+  }
+  .s3-formula-card.offshore { border-color:var(--blue); background:#F0F6FF; }
+  .s3-formula-card.onshore { border-color:var(--green); background:#F0FFF4; }
+  .s3-formula-tag {
+    font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+    margin-bottom:12px;
+  }
+  .s3-formula-code {
+    display:flex; align-items:center; gap:0;
+    font-size:clamp(20px,2vw,32px); color:var(--ink);
+    margin-bottom:14px; line-height:1;
+    font-family:'Times New Roman',Georgia,serif;
+  }
+  .s3-formula-code .var {
+    font-style:italic; font-weight:400;
+  }
+  .s3-formula-code .eq {
+    font-weight:400; margin:0 .4em;
+  }
+  .s3-formula-code .expr {
+    display:inline-flex; align-items:center; position:relative;
+  }
+  .s3-formula-code .bracket {
+    font-weight:200; font-style:normal;
+    font-size:2.4em; line-height:0.85;
+    display:flex; align-items:center;
+  }
+  .s3-formula-code .bracket-l { margin-right:.05em; }
+  .s3-formula-code .bracket-r { margin-left:.05em; }
+  .s3-formula-code .frac {
+    display:inline-flex; flex-direction:column; align-items:center;
+    font-style:italic; font-weight:400;
+    padding:0 .15em;
+  }
+  .s3-formula-code .frac-num {
+    padding-bottom:4px; border-bottom:1.5px solid var(--ink); line-height:1.1;
+  }
+  .s3-formula-code .frac-den {
+    padding-top:4px; line-height:1.1; font-style:normal;
+  }
+  .s3-formula-code .exp {
+    font-size:0.5em; font-weight:400; font-style:normal;
+    align-self:flex-start; margin-top:-.2em; margin-left:.08em;
+  }
+  .s3-formula-note { font-size:clamp(12px,1vw,14px); color:var(--ink2); }
+  .s3-callout {
+    background:#FFFDE7; border-left:4px solid var(--yellow); border-radius:0 12px 12px 0;
+    padding:16px 24px; max-width:750px;
+  }
+  .s3-callout p { font-size:clamp(13px,1.1vw,17px); color:var(--ink); line-height:1.6; }
+  .s3-callout strong { color:var(--ink); }
+
+  /* ── Slide 4: Evidence ── */
+  .s4-h {
+    font-family:'Google Sans Display','Google Sans',sans-serif;
+    font-size:clamp(26px,3.2vw,48px); font-weight:700; color:var(--ink);
+    margin-bottom:2vh;
+  }
+  .s4-sub { font-size:clamp(14px,1.2vw,18px); color:var(--ink2); margin-bottom:4vh; }
+  .s4-grid { display:flex; gap:3vw; flex:1; min-height:0; }
+  .s4-card {
+    flex:1; background:var(--bg); border-radius:16px; padding:28px 32px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+  }
+  .s4-big {
+    font-family:'Google Sans Display','Google Sans',sans-serif;
+    font-size:clamp(48px,5vw,80px); font-weight:700; line-height:1;
+  }
+  .s4-label { font-size:clamp(18px,1.6vw,26px); color:var(--ink2); margin-top:1.5vh; }
+  .s4-detail { font-size:clamp(14px,1.2vw,18px); color:var(--ink3); margin-top:1vh; }
+
+  /* ── Slide 5: What this means ── */
+  .s5-h {
+    font-family:'Google Sans Display','Google Sans',sans-serif;
+    font-size:clamp(26px,3.2vw,48px); font-weight:700; color:var(--ink);
+    margin-bottom:5vh;
+  }
+  .s5-bullets { display:flex; flex-direction:column; gap:3vh; max-width:900px; }
+  .s5-bullet {
+    display:flex; align-items:flex-start; gap:20px;
+    padding:24px 28px; border-radius:16px; background:var(--bg);
+  }
+  .s5-bullet-icon {
+    width:44px; height:44px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; font-weight:700; color:#fff;
+  }
+  .s5-bullet h3 { font-size:clamp(16px,1.4vw,22px); font-weight:500; color:var(--ink); margin-bottom:4px; }
+  .s5-bullet p { font-size:clamp(13px,1.1vw,16px); color:var(--ink2); line-height:1.5; }
+
+  /* ── Slide 6: Next Steps ── */
+  .s6-h {
+    font-family:'Google Sans Display','Google Sans',sans-serif;
+    font-size:clamp(26px,3.2vw,48px); font-weight:700; color:var(--ink);
+    margin-bottom:5vh;
+  }
+  .s6-roadmap { display:flex; flex-direction:column; gap:4vh; max-width:800px; }
+  .s6-step { display:flex; align-items:flex-start; gap:24px; }
+  .s6-step-marker {
+    flex-shrink:0; width:48px; height:48px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; font-weight:700; color:#fff;
+  }
+  .s6-step h3 { font-size:clamp(18px,1.6vw,26px); font-weight:500; color:var(--ink); margin-bottom:4px; }
+  .s6-step p { font-size:clamp(13px,1.1vw,16px); color:var(--ink2); line-height:1.6; }
+  .s6-step .tag {
+    display:inline-block; font-size:11px; font-weight:700; letter-spacing:.3px;
+    text-transform:uppercase; padding:3px 10px; border-radius:20px; margin-top:8px;
+  }
+
+  /* ── Slide 7: Live Tool ── */
+  .s7-h {
+    font-family:'Google Sans Display','Google Sans',sans-serif;
+    font-size:clamp(26px,3.2vw,48px); font-weight:700; color:var(--ink);
+    margin-bottom:1.5vh;
+  }
+  .s7-sub { font-size:clamp(14px,1.2vw,18px); color:var(--ink2); margin-bottom:5vh; max-width:750px; line-height:1.6; }
+  .s7-grid { display:flex; gap:2.5vw; margin-bottom:5vh; }
+  .s7-card {
+    flex:1; background:var(--bg); border-radius:16px; padding:28px 32px;
+    text-align:center;
+  }
+  .s7-big {
+    font-family:'Google Sans Display','Google Sans',sans-serif;
+    font-size:clamp(36px,4vw,64px); font-weight:700; line-height:1;
+  }
+  .s7-label { font-size:clamp(13px,1.1vw,16px); color:var(--ink2); margin-top:1vh; }
+  .s7-ready {
+    background:#E6F4EA; border-left:4px solid var(--green); border-radius:0 12px 12px 0;
+    padding:20px 28px; max-width:750px;
+  }
+  .s7-ready p { font-size:clamp(14px,1.2vw,18px); color:var(--ink); line-height:1.6; }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active" data-s="1">
+  <div class="s1-top">
+    <div class="s1-left">
+      <div class="s1-badge">Proposal for GHG Protocol Scope 2</div>
+      <h1>Score hourly matching from <em>satellite data alone</em></h1>
+      <p class="s1-sub">Free weather data reconstructs wind and solar generation profiles accurate enough for hourly energy certificates &mdash; no meter data required. Validated across 93 wind farms in 6 countries.</p>
+    </div>
+    <div class="s1-right">
+      <div class="s1-legend">
+        <span><span class="dot" style="background:#4285F4"></span>Metered</span>
+        <span><span class="dot" style="background:#34A853"></span>Satellite</span>
+      </div>
+      <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+        <defs><linearGradient id="mg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(66,133,244,0.18)"/><stop offset="100%" stop-color="rgba(66,133,244,0.02)"/></linearGradient></defs>
+        <line x1="71.26" y1="10" x2="71.26" y2="190" stroke="#DADCE0" stroke-width="1"/><text x="71.26" y="212" fill="#80868B" font-size="11" text-anchor="middle" font-family="Google Sans,sans-serif">Sun</text>
+        <line x1="171.86" y1="10" x2="171.86" y2="190" stroke="#DADCE0" stroke-width="1"/><text x="171.86" y="212" fill="#80868B" font-size="11" text-anchor="middle" font-family="Google Sans,sans-serif">Mon</text>
+        <line x1="272.46" y1="10" x2="272.46" y2="190" stroke="#DADCE0" stroke-width="1"/><text x="272.46" y="212" fill="#80868B" font-size="11" text-anchor="middle" font-family="Google Sans,sans-serif">Tue</text>
+        <line x1="373.05" y1="10" x2="373.05" y2="190" stroke="#DADCE0" stroke-width="1"/><text x="373.05" y="212" fill="#80868B" font-size="11" text-anchor="middle" font-family="Google Sans,sans-serif">Wed</text>
+        <line x1="473.65" y1="10" x2="473.65" y2="190" stroke="#DADCE0" stroke-width="1"/><text x="473.65" y="212" fill="#80868B" font-size="11" text-anchor="middle" font-family="Google Sans,sans-serif">Thu</text>
+        <line x1="574.25" y1="10" x2="574.25" y2="190" stroke="#DADCE0" stroke-width="1"/><text x="574.25" y="212" fill="#80868B" font-size="11" text-anchor="middle" font-family="Google Sans,sans-serif">Fri</text>
+        <line x1="674.85" y1="10" x2="674.85" y2="190" stroke="#DADCE0" stroke-width="1"/><text x="674.85" y="212" fill="#80868B" font-size="11" text-anchor="middle" font-family="Google Sans,sans-serif">Sat</text>
+        <path d="M0,178.7 L4.2,167.1 L8.4,156.4 L12.6,167.8 L16.8,176.3 L21,180.7 L25.1,168.5 L29.3,184.8 L33.5,188.6 L37.7,183.4 L41.9,186 L46.1,190 L50.3,190 L54.5,190 L58.7,190 L62.9,190 L67.1,190 L71.3,190 L75.4,185.4 L79.6,181.2 L83.8,188.7 L88,190 L92.2,190 L96.4,187.9 L100.6,190 L104.8,190 L109,189.7 L113.2,183.4 L117.4,181.7 L121.6,185.3 L125.7,190 L129.9,190 L134.1,188.4 L138.3,186.2 L142.5,158.2 L146.7,160 L150.9,175.4 L155.1,157.1 L159.3,152.5 L163.5,162.5 L167.7,169.8 L171.9,177.8 L176,184.7 L180.2,184.4 L184.4,187.1 L188.6,190 L192.8,190 L197,190 L201.2,190 L205.4,187.3 L209.6,181 L213.8,171.8 L218,168.4 L222.2,178 L226.3,190 L230.5,190 L234.7,189.2 L238.9,190 L243.1,190 L247.3,190 L251.5,189.7 L255.7,177.4 L259.9,177.4 L264.1,171.4 L268.3,161.5 L272.5,139.5 L276.6,135.8 L280.8,150.8 L285,188.6 L289.2,190 L293.4,190 L297.6,188.3 L301.8,188.9 L306,188.8 L310.2,185.3 L314.4,181.3 L318.6,160.9 L322.8,153.5 L326.9,146.2 L331.1,151.4 L335.3,145 L339.5,143.8 L343.7,130.3 L347.9,139.9 L352.1,149.8 L356.3,158.7 L360.5,153.1 L364.7,143.2 L368.9,151.9 L373.1,156.3 L377.2,161.1 L381.4,165.9 L385.6,167.4 L389.8,167.1 L394,165.6 L398.2,160.2 L402.4,163.9 L406.6,167 L410.8,174.6 L415,176.4 L419.2,174.1 L423.4,171.3 L427.5,169.2 L431.7,156.4 L435.9,129.5 L440.1,113.6 L444.3,100.1 L448.5,108.4 L452.7,103.7 L456.9,113.3 L461.1,107.7 L465.3,112 L469.5,100.5 L473.7,105.4 L477.8,111.6 L482,137.8 L486.2,129.2 L490.4,138.2 L494.6,127.6 L498.8,117.4 L503,115.8 L507.2,125.3 L511.4,86.6 L515.6,100.2 L519.8,88.1 L524,82.7 L528.1,65.7 L532.3,76.7 L536.5,60.1 L540.7,45.5 L544.9,36.7 L549.1,35.1 L553.3,37.3 L557.5,35.7 L561.7,35.2 L565.9,38.2 L570.1,42.7 L574.3,46.4 L578.4,46 L582.6,43 L586.8,46.8 L591,65.5 L595.2,94.4 L599.4,91.1 L603.6,72.6 L607.8,78.3 L612,65 L616.2,45 L620.4,44.7 L624.6,70.4 L628.7,81.5 L632.9,53.1 L637.1,39.4 L641.3,37.3 L645.5,36.1 L649.7,36.1 L653.9,36.4 L658.1,36 L662.3,36.4 L666.5,36.8 L670.7,36 L674.9,36.1 L679,36.4 L683.2,37.1 L687.4,40.2 L691.6,52.9 L695.8,50.7 L700,48.1 L700,190 L0,190 Z" fill="url(#mg)"/>
+        <path d="M0,178.7 L4.2,167.1 L8.4,156.4 L12.6,167.8 L16.8,176.3 L21,180.7 L25.1,168.5 L29.3,184.8 L33.5,188.6 L37.7,183.4 L41.9,186 L46.1,190 L50.3,190 L54.5,190 L58.7,190 L62.9,190 L67.1,190 L71.3,190 L75.4,185.4 L79.6,181.2 L83.8,188.7 L88,190 L92.2,190 L96.4,187.9 L100.6,190 L104.8,190 L109,189.7 L113.2,183.4 L117.4,181.7 L121.6,185.3 L125.7,190 L129.9,190 L134.1,188.4 L138.3,186.2 L142.5,158.2 L146.7,160 L150.9,175.4 L155.1,157.1 L159.3,152.5 L163.5,162.5 L167.7,169.8 L171.9,177.8 L176,184.7 L180.2,184.4 L184.4,187.1 L188.6,190 L192.8,190 L197,190 L201.2,190 L205.4,187.3 L209.6,181 L213.8,171.8 L218,168.4 L222.2,178 L226.3,190 L230.5,190 L234.7,189.2 L238.9,190 L243.1,190 L247.3,190 L251.5,189.7 L255.7,177.4 L259.9,177.4 L264.1,171.4 L268.3,161.5 L272.5,139.5 L276.6,135.8 L280.8,150.8 L285,188.6 L289.2,190 L293.4,190 L297.6,188.3 L301.8,188.9 L306,188.8 L310.2,185.3 L314.4,181.3 L318.6,160.9 L322.8,153.5 L326.9,146.2 L331.1,151.4 L335.3,145 L339.5,143.8 L343.7,130.3 L347.9,139.9 L352.1,149.8 L356.3,158.7 L360.5,153.1 L364.7,143.2 L368.9,151.9 L373.1,156.3 L377.2,161.1 L381.4,165.9 L385.6,167.4 L389.8,167.1 L394,165.6 L398.2,160.2 L402.4,163.9 L406.6,167 L410.8,174.6 L415,176.4 L419.2,174.1 L423.4,171.3 L427.5,169.2 L431.7,156.4 L435.9,129.5 L440.1,113.6 L444.3,100.1 L448.5,108.4 L452.7,103.7 L456.9,113.3 L461.1,107.7 L465.3,112 L469.5,100.5 L473.7,105.4 L477.8,111.6 L482,137.8 L486.2,129.2 L490.4,138.2 L494.6,127.6 L498.8,117.4 L503,115.8 L507.2,125.3 L511.4,86.6 L515.6,100.2 L519.8,88.1 L524,82.7 L528.1,65.7 L532.3,76.7 L536.5,60.1 L540.7,45.5 L544.9,36.7 L549.1,35.1 L553.3,37.3 L557.5,35.7 L561.7,35.2 L565.9,38.2 L570.1,42.7 L574.3,46.4 L578.4,46 L582.6,43 L586.8,46.8 L591,65.5 L595.2,94.4 L599.4,91.1 L603.6,72.6 L607.8,78.3 L612,65 L616.2,45 L620.4,44.7 L624.6,70.4 L628.7,81.5 L632.9,53.1 L637.1,39.4 L641.3,37.3 L645.5,36.1 L649.7,36.1 L653.9,36.4 L658.1,36 L662.3,36.4 L666.5,36.8 L670.7,36 L674.9,36.1 L679,36.4 L683.2,37.1 L687.4,40.2 L691.6,52.9 L695.8,50.7 L700,48.1" fill="none" stroke="#4285F4" stroke-width="1.5"/>
+        <path d="M0,182 L4.2,181.3 L8.4,182.1 L12.6,180.9 L16.8,181.3 L21,183.8 L25.1,181.3 L29.3,183.7 L33.5,181.9 L37.7,176.7 L41.9,175.4 L46.1,178.1 L50.3,179.5 L54.5,181.1 L58.7,182 L62.9,189.4 L67.1,189.7 L71.3,188.8 L75.4,187.4 L79.6,188.2 L83.8,186 L88,186.5 L92.2,185 L96.4,182.7 L100.6,182.3 L104.8,185.1 L109,186.1 L113.2,187.6 L117.4,186.7 L121.6,182.2 L125.7,179.9 L129.9,170.3 L134.1,163.6 L138.3,157.3 L142.5,162 L146.7,165.2 L150.9,164.8 L155.1,163.3 L159.3,165 L163.5,170.4 L167.7,171 L171.9,171.1 L176,176.4 L180.2,182.8 L184.4,183.5 L188.6,184.3 L192.8,186.8 L197,187.2 L201.2,183.8 L205.4,178.8 L209.6,175.9 L213.8,171.9 L218,171.9 L222.2,171.7 L226.3,179.1 L230.5,181.9 L234.7,187.1 L238.9,186.4 L243.1,186.1 L247.3,186.3 L251.5,182.7 L255.7,172.7 L259.9,159.3 L264.1,133.5 L268.3,136.7 L272.5,142 L276.6,160.4 L280.8,179.9 L285,182.5 L289.2,181.8 L293.4,185.4 L297.6,187 L301.8,186.8 L306,186.2 L310.2,186.3 L314.4,183.3 L318.6,178.7 L322.8,169.8 L326.9,145.9 L331.1,130.5 L335.3,131.3 L339.5,140.8 L343.7,145.2 L347.9,144.6 L352.1,141.1 L356.3,137.7 L360.5,139.7 L364.7,138.4 L368.9,142 L373.1,148.1 L377.2,157.3 L381.4,152.7 L385.6,149.1 L389.8,155.2 L394,162.1 L398.2,167 L402.4,167.8 L406.6,169.2 L410.8,171.7 L415,161.6 L419.2,158.7 L423.4,152.9 L427.5,150.8 L431.7,139 L435.9,117.4 L440.1,119.6 L444.3,119.2 L448.5,118.7 L452.7,118.2 L456.9,119.8 L461.1,125.5 L465.3,124.5 L469.5,129.4 L473.7,136.9 L477.8,147.4 L482,141.8 L486.2,134.7 L490.4,134.6 L494.6,132 L498.8,129.5 L503,127.3 L507.2,125.3 L511.4,120.4 L515.6,110.5 L519.8,107.4 L524,106.8 L528.1,99.5 L532.3,90.3 L536.5,77.7 L540.7,63.6 L544.9,58.5 L549.1,61.2 L553.3,63.7 L557.5,62.6 L561.7,63 L565.9,59.8 L570.1,57.9 L574.3,66.6 L578.4,70.8 L582.6,65.9 L586.8,85.9 L591,97.9 L595.2,97.7 L599.4,94.5 L603.6,89.2 L607.8,88.1 L612,87.2 L616.2,78.7 L620.4,77.6 L624.6,76.8 L628.7,79.7 L632.9,75.7 L637.1,69.8 L641.3,58.2 L645.5,40.3 L649.7,25.2 L653.9,21.6 L658.1,20.7 L662.3,23.9 L666.5,20.6 L670.7,27.2 L674.9,33.1 L679,35.3 L683.2,58.1 L687.4,52.5 L691.6,54.6 L695.8,56 L700,54.7" fill="none" stroke="#34A853" stroke-width="2"/>
+      </svg>
+      <div class="s1-chart-note">One week at a US Great Plains wind farm &mdash; satellite tracks metered output with r&thinsp;=&thinsp;0.97</div>
+    </div>
+  </div>
+  <div class="s1-stats">
+    <div class="s1-stat"><div class="s1-stat-num" style="color:var(--green)">~2 pp</div><div class="s1-stat-label">Typical accuracy</div></div>
+    <div class="s1-stat"><div class="s1-stat-num" style="color:var(--yellow)">93</div><div class="s1-stat-label">Farms validated</div></div>
+    <div class="s1-stat"><div class="s1-stat-num" style="color:var(--blue)">6</div><div class="s1-stat-label">Countries</div></div>
+    <div class="s1-stat"><div class="s1-stat-num" style="color:var(--red)">0</div><div class="s1-stat-label">Meter data required</div></div>
+  </div>
+</div>
+
+<!-- SLIDE 2: THE PROBLEM -->
+<div class="slide" data-s="2">
+  <div class="s2-h">Hourly matching needs hourly shapes.<br><em>Most generators can't provide them.</em></div>
+  <div class="s2-points">
+    <div class="s2-point">
+      <div class="s2-point-num" style="color:var(--red)">Scarce</div>
+      <h3>Hourly metered data is hard to get</h3>
+      <p>Revenue-grade metering is expensive, proprietary, and inconsistently formatted. Older, smaller, and developing-market generators often have no hourly telemetry at all.</p>
+    </div>
+    <div class="s2-point">
+      <div class="s2-point-num" style="color:var(--yellow)">10+ pp</div>
+      <h3>Error from averaged profiles</h3>
+      <p>Multi-year "P50" averaging compresses the generation distribution and systematically inflates matching scores. It gets <em>worse</em> with more years.</p>
+    </div>
+    <div class="s2-point">
+      <div class="s2-point-num" style="color:var(--blue)">Free</div>
+      <h3>ERA5 satellite weather data</h3>
+      <p>Copernicus ERA5 provides hourly wind speed at every location on Earth, back to 1950. Open access. The question is: is it accurate enough?</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: HOW IT WORKS -->
+<div class="slide" data-s="3">
+  <div class="s3-h">Three inputs. Two simple formulas.</div>
+  <div class="s3-steps">
+    <div class="s3-step">
+      <div class="s3-step-num">1</div>
+      <h4>Location</h4>
+      <p>Already in the certificate registry. ERA5 gives you hourly wind at that point.</p>
+    </div>
+    <div class="s3-step">
+      <div class="s3-step-num">2</div>
+      <h4>Annual MWh</h4>
+      <p>The volumetric total from the existing certificate. Already known.</p>
+    </div>
+    <div class="s3-step">
+      <div class="s3-step-num">3</div>
+      <h4>Offshore or Onshore</h4>
+      <p>Determines which validated formula to apply. Both are simple, two-parameter curves.</p>
+    </div>
+    <div class="s3-step">
+      <div class="s3-step-num" style="background:var(--green)">&#10003;</div>
+      <h4>Hourly shape</h4>
+      <p>8,760 hours. Total matches your certificate. Shape comes from satellite data.</p>
+    </div>
+  </div>
+  <div class="s3-formulas">
+    <div class="s3-formula-card offshore">
+      <div class="s3-formula-tag" style="color:var(--blue);">Offshore</div>
+      <div id="katex-offshore" style="margin:14px 0 14px;"></div>
+      <div class="s3-formula-note">38 farms &middot; UK, Belgium, Denmark &middot; <strong>~2 pp accuracy</strong></div>
+    </div>
+    <div class="s3-formula-card onshore">
+      <div class="s3-formula-tag" style="color:var(--green);">Onshore</div>
+      <div id="katex-onshore" style="margin:14px 0 14px;"></div>
+      <div class="s3-formula-note">55 farms &middot; UK, Canada, Australia, NZ, China, USA &middot; <strong>~3 pp accuracy</strong></div>
+    </div>
+  </div>
+  <div class="s3-callout" style="background:#E8F0FE; border-left-color:var(--blue); margin-bottom:2vh;">
+    <p><strong>Every REC on every registry in the world already has these three inputs.</strong> That means every certificate&mdash;on any registry, in any country&mdash;can get an hourly matching score today, using only the data that already exists at the point of retirement.</p>
+  </div>
+  <div class="s3-callout">
+    <p><strong>Built-in conservatism:</strong> Both formulas slightly undercredit hourly alignment, so generators are never overcredited. This preserves the incentive to invest in real metering&mdash;actual data will always score higher.</p>
+  </div>
+</div>
+
+<!-- SLIDE 4: THE EVIDENCE -->
+<div class="slide" data-s="4">
+  <div class="s4-h">Validated across 93 farms in 6 countries</div>
+  <div class="s4-sub">Head-to-head against revenue-grade metered production data across UK, Australia, Canada, Belgium, Denmark, and New Zealand</div>
+  <div class="s4-grid">
+    <div class="s4-card" style="border-top:4px solid var(--blue)">
+      <div class="s4-big" style="color:var(--blue)">&pm;2 pp</div>
+      <div class="s4-label">Offshore wind</div>
+      <div class="s4-detail">38 farms &middot; Blind (no meter data)</div>
+    </div>
+    <div class="s4-card" style="border-top:4px solid var(--green)">
+      <div class="s4-big" style="color:var(--green)">&pm;3 pp</div>
+      <div class="s4-label">Onshore wind</div>
+      <div class="s4-detail">55 farms &middot; UK, Canada, Australia, NZ, China</div>
+    </div>
+    <div class="s4-card" style="border-top:4px solid var(--yellow)">
+      <div class="s4-big" style="color:var(--yellow)">~1 pp</div>
+      <div class="s4-label">With 3 months of real data</div>
+      <div class="s4-detail">One-time calibration &middot; Works for lifetime of asset</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: WHAT THIS MEANS -->
+<div class="slide" data-s="5">
+  <div class="s5-h">What this means for GHGP Scope 2</div>
+  <div class="s5-bullets">
+    <div class="s5-bullet">
+      <div class="s5-bullet-icon" style="background:var(--green)">1</div>
+      <div>
+        <h3>It works now, with information you already have</h3>
+        <p>Location and annual MWh are already in every certificate registry. Add offshore/onshore and you have an hourly shape accurate to &pm;2 pp (offshore) or &pm;3 pp (onshore). No new data collection needed.</p>
+      </div>
+    </div>
+    <div class="s5-bullet">
+      <div class="s5-bullet-icon" style="background:var(--blue)">2</div>
+      <div>
+        <h3>3 months of real data drops error to ~1 pp</h3>
+        <p>A short calibration period from any time window&mdash;calibrate once, use forever. The parameters persist indefinitely because ERA5 wind patterns are stable year to year.</p>
+      </div>
+    </div>
+    <div class="s5-bullet">
+      <div class="s5-bullet-icon" style="background:var(--yellow)">3</div>
+      <div>
+        <h3>The default is conservative, by design</h3>
+        <p>Satellite shapes slightly undercount hourly alignment, so no one is overcredited. Generators who invest in metering will always score higher&mdash;a natural incentive to get real data without excluding anyone.</p>
+      </div>
+    </div>
+    <div class="s5-bullet">
+      <div class="s5-bullet-icon" style="background:var(--red)">4</div>
+      <div>
+        <h3>It works everywhere in the world</h3>
+        <p>ERA5 is global and free. Validated across the UK, Canada, Australia, Belgium, Denmark, and New Zealand. Every wind farm on Earth can participate in hourly matching today.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: NEXT STEPS -->
+<div class="slide" data-s="6">
+  <div class="s6-h">Next steps</div>
+  <div class="s6-roadmap">
+    <div class="s6-step">
+      <div class="s6-step-marker" style="background:var(--blue)">1</div>
+      <div>
+        <h3>Integrate into the GHGP Scope 2 process</h3>
+        <p>Satellite-based shaped allocation as an accepted fallback when hourly metered data is unavailable. The methodology requires only information already present in certificate registries.</p>
+        <div class="tag" style="background:#E8F0FE;color:var(--blue);">Policy adoption</div>
+      </div>
+    </div>
+    <div class="s6-step">
+      <div class="s6-step-marker" style="background:var(--green)">2</div>
+      <div>
+        <h3>Publish and review the validation</h3>
+        <p>93-farm dataset across 6 countries, fully reproducible using only public satellite data. Seeking co-authorship and independent review of the methodology and findings.</p>
+        <div class="tag" style="background:#E6F4EA;color:var(--green);">Scientific credibility</div>
+      </div>
+    </div>
+    <div class="s6-step">
+      <div class="s6-step-marker" style="background:var(--yellow)">3</div>
+      <div>
+        <h3>The tool is already built</h3>
+        <p>I&rsquo;ve built and deployed a live tool that generates satellite-based hourly shapes for any location on Earth. It can provide 2025 generation profiles today, and be updated at the end of each year. Hosting costs under $20/month.</p>
+        <div class="tag" style="background:#FEF7E0;color:#E37400;">Ready now</div>
+      </div>
+    </div>
+    <div class="s6-step">
+      <div class="s6-step-marker" style="background:var(--red)">4</div>
+      <div>
+        <h3>Integrate into registries as a default</h3>
+        <p>Existing annual-only registries already carry location and volume&mdash;the two inputs needed. Satellite shaped allocation lets them support hourly matching without requiring any new data from generators.</p>
+        <div class="tag" style="background:#FCE8E6;color:var(--red);">Market infrastructure</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: LIVE TOOL -->
+<div class="slide" data-s="7">
+  <div style="display:inline-block;font-size:12px;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:var(--green);background:#E6F4EA;padding:5px 12px;border-radius:20px;margin-bottom:2.5vh;">Built and ready for deployment</div>
+  <div class="s7-h">Energy Shape Builder</div>
+  <div class="s7-sub">Uses the optimized defaults from this validation study to produce accurate wind curves out of the box. Enter any location, choose onshore or offshore, get an 8,760-hour generation profile in seconds. Solar shapes are also supported&mdash;and because satellite irradiance translates directly to panel output, solar is accurate immediately with no calibration needed.</div>
+
+  <div class="s7-grid">
+    <div class="s7-card">
+      <div class="s7-big" style="color:var(--blue);">3</div>
+      <div class="s7-label">Inputs: location, terrain, volume</div>
+    </div>
+    <div class="s7-card">
+      <div class="s7-big" style="color:var(--green);">8,760</div>
+      <div class="s7-label">Hourly values, downloadable CSV</div>
+    </div>
+    <div class="s7-card">
+      <div class="s7-big" style="color:var(--red);">Global</div>
+      <div class="s7-label">ERA5 covers every point on Earth</div>
+    </div>
+    <div class="s7-card">
+      <div class="s7-big" style="color:var(--yellow);">&lt;1s</div>
+      <div class="s7-label">Cached queries, instant repeat</div>
+    </div>
+  </div>
+
+  <div class="s7-ready">
+    <p><strong>Ready for global deployment.</strong> Built on FastAPI + React, containerized for Google Cloud Run. The same optimized defaults validated across 93 farms in 6 countries &mdash; available as an API for any certificate registry, buyer platform, or market participant.</p>
+  </div>
+</div>
+
+<!-- Nav -->
+<div class="counter"><span id="c">1</span> / 7</div>
+<div class="nav">
+  <button id="pb" onclick="go(-1)" disabled>&larr;</button>
+  <button id="nb" onclick="go(1)">&rarr;</button>
+</div>
+<script>
+let s=1;const total=7;
+function go(d){
+  let n=s+d; if(n<1||n>total)return;
+  document.querySelector(`[data-s="${s}"]`).classList.remove('active');
+  s=n;
+  document.querySelector(`[data-s="${s}"]`).classList.add('active');
+  document.getElementById('c').textContent=s;
+  document.getElementById('pb').disabled=s===1;
+  document.getElementById('nb').disabled=s===total;
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();go(1)}
+  if(e.key==='ArrowLeft'){e.preventDefault();go(-1)}
+});
+document.addEventListener('DOMContentLoaded',()=>{
+  const opts={displayMode:true,throwOnError:false};
+  katex.render('P = \\left(\\frac{v}{13.5}\\right)^{1.75}',document.getElementById('katex-offshore'),opts);
+  katex.render('P = \\left(\\frac{v}{12}\\right)^{2}',document.getElementById('katex-onshore'),opts);
+});
+</script>
+</body>
+</html>
